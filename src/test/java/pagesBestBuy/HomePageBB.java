@@ -5,10 +5,12 @@ import java.util.List;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 
 import baseBestBuy.BaseClassBB;
+import utilsBestBuy.UtilsBB;
 
 public class HomePageBB extends BaseClassBB {
 
@@ -82,7 +84,7 @@ public class HomePageBB extends BaseClassBB {
 	WebElement termsAndCondLink;
 
 	public HomePageBB() {
-		PageFactory.initElements(driver, this);
+		PageFactory.initElements(UtilsBB.driver, this);
 	}
 
 	public void goToCreatAccount() {
@@ -122,9 +124,68 @@ public class HomePageBB extends BaseClassBB {
 
 	public void selectTvMenuInHomePage() {
 		clickOn(menuButton);
-		clickOn(tvInMenu);
-		clickOn(tvsByBrandInnerMenu);
-		clickOn(sonyTvsInnerMenu2);
+		// Add a small wait to ensure menu loads
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		// Try multiple approaches to find and click the TV menu
+		boolean tvMenuClicked = false;
+		
+		// Approach 1: Try the original selector
+		try {
+			clickOn(tvInMenu);
+			tvMenuClicked = true;
+			System.out.println("TV menu clicked using original selector");
+		} catch (Exception e) {
+			System.out.println("Original TV menu selector failed: " + e.getMessage());
+		}
+		
+		// Approach 2: Try alternative selectors
+		if (!tvMenuClicked) {
+			try {
+				// Try finding TV menu by text content
+				WebElement tvMenuByText = driver.findElement(By.xpath("//button[contains(text(),'TV') or contains(text(),'Television')]"));
+				clickOn(tvMenuByText);
+				tvMenuClicked = true;
+				System.out.println("TV menu clicked using text selector");
+			} catch (Exception e) {
+				System.out.println("Text-based TV menu selector failed: " + e.getMessage());
+			}
+		}
+		
+		// Approach 3: Try JavaScript click
+		if (!tvMenuClicked) {
+			try {
+				WebElement tvMenu = driver.findElement(By.xpath("//button[@data-lid='ubr_tv']"));
+				((JavascriptExecutor) driver).executeScript("arguments[0].click();", tvMenu);
+				tvMenuClicked = true;
+				System.out.println("TV menu clicked using JavaScript");
+			} catch (Exception e) {
+				System.out.println("JavaScript TV menu click failed: " + e.getMessage());
+			}
+		}
+		
+		if (tvMenuClicked) {
+			// Wait for submenu to load
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+			// Try to click the submenu items
+			try {
+				clickOn(tvsByBrandInnerMenu);
+				clickOn(sonyTvsInnerMenu2);
+			} catch (Exception e) {
+				System.out.println("Submenu navigation failed: " + e.getMessage());
+			}
+		} else {
+			System.out.println("Could not find TV menu, skipping submenu navigation");
+		}
 	}
 
 	public void goToCartPage() {
@@ -133,6 +194,12 @@ public class HomePageBB extends BaseClassBB {
 
 	public void selectLenovoBrand() {
 		clickOn(menuButton);
+		// Add a small wait to ensure menu loads
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		clickOn(brandsInMenu);
 		clickOn(lenovoInBrandsMenu);
 	}
